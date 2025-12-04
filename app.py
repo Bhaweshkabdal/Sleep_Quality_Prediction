@@ -1,46 +1,47 @@
 import streamlit as st
 import pandas as pd
-from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 
 # Load dataset
 data = pd.read_csv("sleep_data.csv")
 
-# Separate encoders
-stress_encoder = LabelEncoder()
-exercise_encoder = LabelEncoder()
-quality_encoder = LabelEncoder()
+# ================== MANUAL ENCODING (No Error Ever) ==================
 
-data['Stress_Level_enc'] = stress_encoder.fit_transform(data['Stress_Level'])
-data['Exercise_Frequency_enc'] = exercise_encoder.fit_transform(data['Exercise_Frequency'])
-data['Sleep_Quality_enc'] = quality_encoder.fit_transform(data['Sleep_Quality'])
+stress_map = {"Low":0, "Medium":1, "High":2}
+exercise_map = {"None":0, "Weekly":1, "Daily":2}
+quality_map = {"Poor":0, "Average":1, "Good":2}
 
-# Training
-X = data[['Sleep_Duration', 'Stress_Level_enc', 'Exercise_Frequency_enc', 'Coffee_Intake', 'Screen_Time']]
-y = data['Sleep_Quality_enc']
+# Convert dataset values to numbers
+data["Stress_Level"] = data["Stress_Level"].map(stress_map)
+data["Exercise_Frequency"] = data["Exercise_Frequency"].map(exercise_map)
+data["Sleep_Quality"] = data["Sleep_Quality"].map(quality_map)
+
+# Train Model
+X = data[["Sleep_Duration","Stress_Level","Exercise_Frequency","Coffee_Intake","Screen_Time"]]
+y = data["Sleep_Quality"]
+
 model = RandomForestClassifier()
-model.fit(X, y)
+model.fit(X,y)
 
-# ---------------- Web UI ---------------- #
+# ==================== STREAMLIT UI ======================
 
-st.title("Sleep Quality Prediction System")
-st.subheader("Enter Your Lifestyle & Sleep Details")
+st.title("Sleep Quality Prediction App")
+st.write("Enter your daily habits to predict sleep performance")
 
-sleep = st.number_input("Sleep Duration (hours)", min_value=1.0, max_value=12.0, value=7.0)
+sleep = st.number_input("Sleep Duration (hours)",1.0,12.0,7.0)
+stress = st.selectbox("Stress Level",["Low","Medium","High"])
+exercise = st.selectbox("Exercise Frequency",["None","Weekly","Daily"])
+coffee = st.number_input("Daily Coffee Intake (cups)",0,10,1)
+screen = st.number_input("Screen Time (hours)",0.0,12.0,4.0)
 
-stress = st.selectbox("Stress Level", ["Low", "Medium", "High"])
-exercise = st.selectbox("Exercise Frequency", ["None", "Weekly", "Daily"])
+if st.button("Predict"):
+    stress_enc = stress_map[stress]
+    exercise_enc = exercise_map[exercise]
 
-coffee = st.number_input("Daily Coffee Intake (cups)", min_value=0, max_value=10, value=1)
-screen = st.number_input("Screen Time (hours)", min_value=0.0, max_value=12.0, value=4.0)
+    user_data = [[sleep,stress_enc,exercise_enc,coffee,screen]]
 
-if st.button("Predict Sleep Quality"):
-    stress_enc = stress_encoder.transform([stress])[0]
-    exercise_enc = exercise_encoder.transform([exercise])[0]
-
-    user_data = [[sleep, stress_enc, exercise_enc, coffee, screen]]
     pred = model.predict(user_data)[0]
 
-    result = quality_encoder.inverse_transform([pred])[0]
+    result = list(quality_map.keys())[list(quality_map.values()).index(pred)]
 
-    st.success(f"Predicted Sleep Quality: {result}")
+    st.success(f"Predicted Sleep Quality : {result}")
