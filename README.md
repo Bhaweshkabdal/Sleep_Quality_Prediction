@@ -26,7 +26,7 @@ The purpose of this project is to show how simple Machine Learning models can ev
 | Programming Language | Python |
 | ML Model Used | Random Forest Classifier |
 | Frontend UI | Streamlit |
-| Data Handling | Pandas, Label Encoding |
+| Data Handling | Pandas (Manual Encoding Method) |
 | Dataset Format | CSV |
 
 ---
